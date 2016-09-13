@@ -47,7 +47,7 @@ class Instance:
                     cells_per_block=(1, 1), visualise=True)
     def generate_daisy(self):
         gray_image = color.rgb2gray(self.image)
-        return daisy(gray_image, step=180, radius=58, rings=2, histograms=6,
+        return daisy(gray_image, step=180, radius=32, rings=2, histograms=6,
                          orientations=8, visualize=True)
     def generate_color_histogram(self):
         rgb = np.split(self.image, 3, 2)
@@ -82,9 +82,9 @@ class Dataset:
         
 
         print('Shuffling instances')        
-        rr = range(len(self.instances))
-        np.random.shuffle(rr)
-        self.instances = np.take(self.instances, rr, axis=0)        
+        #rr = range(len(self.instances))
+        #np.random.shuffle(rr)
+        #self.instances = np.take(self.instances, rr, axis=0)        
         
         print('Generating training instances')
         self.training_instances = []
@@ -187,36 +187,35 @@ def main():
     dataset.generate_date()
     
     # train samples
-    X_train , y_train = dataset.get_training_data_country()
+    #X_train , y_train = dataset.get_training_data_country()
     
     # test samples
-    X_test , y_test = dataset.get_testing_data_country()
+    #X_test , y_test = dataset.get_testing_data_country()
     
-    train_test_logistic_regression(X_train, y_train, X_test, y_test)
+    #train_test_logistic_regression(X_train, y_train, X_test, y_test)
     
-    train_test_SVM(X_train, y_train, X_test, y_test)    
+    #train_test_SVM(X_train, y_train, X_test, y_test)    
 #     plot_confusion_matrix(cm)
     
     
     
-#     rIndex = random.randint(0, len(dataset.instances))
-#     instance = dataset.instances[rIndex]
-# 
-#     instance.load()
+    rIndex = random.randint(0, len(dataset.instances))
+    #rIndex = 431
+    print(rIndex)
+    instance = dataset.instances[rIndex]
+    instance.load()
 #     
 #     fd_color_histogram = instance.generate_color_histogram()
 #     print(fd_color_histogram.shape)
 #     
 #     fd, hog_image = instance.generate_hog()
-    
-    # Visualizing HOG
+#     
+#     # Visualizing HOG
 #     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4), sharex=True, sharey=True)
-# 
 #     ax1.axis('off')
 #     ax1.imshow(instance.image, cmap=plt.cm.gray)
 #     ax1.set_title('Input image')
 #     ax1.set_adjustable('box-forced')
-#     
 #     # Rescale histogram for better display
 #     hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0, 0.02))
 #     
@@ -225,16 +224,16 @@ def main():
 #     ax2.set_title('Histogram of Oriented Gradients')
 #     ax1.set_adjustable('box-forced')
 #     plt.show()
-    
-    
-#     daisy_fd, daisy_image = instance.generate_daisy()
 #     
-#     fig, ax = plt.subplots()
-#     ax.axis('off')
-#     ax.imshow(daisy_image)
-#     descs_num = daisy_fd.shape[0] * daisy_fd.shape[1]
-#     ax.set_title('%i DAISY descriptors extracted:' % descs_num)
-#     plt.show()
+    
+    daisy_fd, daisy_image = instance.generate_daisy()
+     
+    fig, ax = plt.subplots()
+    ax.axis('off')
+    ax.imshow(daisy_image)
+    descs_num = daisy_fd.shape[0] * daisy_fd.shape[1]
+    ax.set_title('%i DAISY descriptors extracted:' % descs_num)
+    plt.show()
 
 if __name__ == '__main__':
 
