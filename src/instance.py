@@ -26,7 +26,7 @@ country_map = {'China':0, 'Japan':1, 'Malaysia':2, 'Singapore':3, 'South_Korea':
 class Instance:
     
     g_id = 0    
-    def __init__(self, file_path, country, year, id=-1):
+    def __init__(self, file_path, country = None, year = None, id=-1):
         if (id == -1):
             self.id = Instance.g_id
             Instance.g_id += 1
