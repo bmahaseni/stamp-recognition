@@ -42,7 +42,7 @@ class Dataset:
             for year in self.years:
                 files = glob.glob(self.dataset_folder + os.path.sep + country + os.path.sep + year + os.path.sep + "*.*")
                 for file in files:
-                    self.instances.append(Instance(file, country, year))
+                    self.instances.append(Instance(file, country.ljust(15), year))
         
         print('Total # of instances:' + str(len(self.instances)))
         
