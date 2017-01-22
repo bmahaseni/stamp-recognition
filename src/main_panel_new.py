@@ -58,7 +58,7 @@ class ImageDialog:
         b.pack(pady=5)
 
 	def test_image(self):
-		
+		print 'test'		
 
 
 
