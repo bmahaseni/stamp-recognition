@@ -24,7 +24,7 @@ from sklearn.svm import NuSVC
 from instance import Instance
 
 country_map = {'China':0, 'Japan':1, 'Malaysia':2, 'Singapore':3, 'South_Korea':4}
-
+year_map = {'2010': 0, '2011': 1, '2012': 2, '2013': 3, '2014':4, '2015':5}
 class Dataset:
     
  
@@ -75,7 +75,7 @@ class Dataset:
             features = np.concatenate((features, instance.generate_hog()[0]))
 #             features = instance.generate_hog()[0]
             # append DAISY
-            #features = np.concatenate((features, instance.generate_daisy()[0]))  #                       
+            # features = np.concatenate((features, instance.generate_daisy()[0]))  #                       
             X.append(features)
             y.append(country_map[instance.country.strip()])
             instance.free()
@@ -107,8 +107,42 @@ class Dataset:
     def get_training_data_year(self):
         X = []
         y = []
+        print('Generate training data for year classification')
+        for instance in self.training_instances:
+            instance.load()
+            # append color histogram
+            features = instance.generate_color_histogram()
+            # append HOG
+            features = np.concatenate((features, instance.generate_hog()[0]))
+#             features = instance.generate_hog()[0]
+            # append DAISY
+            # features = np.concatenate((features, instance.generate_daisy()[0]))  #                       
+            X.append(features)
+            y.append(year_map[instance.year.strip()])
+            instance.free()
+        X = np.asanyarray(X)
+        y = np.asanyarray(y)
+        return X, y        
                 
-#    def get_testing_data(self):
+    def get_testing_data_year(self):        
+        X = []
+        y = []
+        print('Generate testing data for year classification')
+        for instance in self.testing_instances:
+            instance.load()
+            # append color histogram
+            features = instance.generate_color_histogram()
+            # append HOG
+            features = np.concatenate((features, instance.generate_hog()[0]))
+            # append DAISY
+#             features = np.concatenate((features, instance.generate_daisy()[0]))  #  
+#             features = instance.generate_hog()[0]                    
+            X.append(features)
+            y.append(year_map[instance.year.strip()])
+            instance.free()
+        X = np.asanyarray(X)
+        y = np.asanyarray(y)
+        return X, y  
     
         
 #                     plt.imshow(image)
@@ -116,7 +150,7 @@ class Dataset:
 
 
 
-#this is just to test and visualize some images
+# this is just to test and visualize some images
 def main():
     rIndex = random.randint(0, len(dataset.instances))
     rIndex = 431

@@ -46,6 +46,7 @@ from sklearn.linear_model import LogisticRegression
 
 from sklearn.svm import NuSVC
 from sklearn.externals import joblib
+from tornado.gen import Task
 
 
 country_map = {'China':0, 'Japan':1, 'Malaysia':2, 'Singapore':3, 'South_Korea':4}
@@ -88,8 +89,11 @@ class ImageDialog:
         label.pack()
         b = Button(top, text="Test", command=self.test_image)
         b.pack(pady=5)
-        label = Label(top, text='Loaded Model Name: ' + loaded_model_name.split('/')[-1], compound=LEFT)
+        label = Label(top, text='Loaded Country Model Name: ' + loaded_country_model_name.split('/')[-1], compound=LEFT)
         label.pack()
+        label = Label(top, text='Loaded Year Model Name: ' + loaded_year_model_name.split('/')[-1], compound=LEFT)
+        label.pack()
+
         self.result = Label(self.top, text='', compound=LEFT)
         self.result.pack()
         
@@ -106,9 +110,11 @@ class ImageDialog:
 #             features = instance.generate_hog()[0]
         # append DAISY
         # features = np.concatenate((features, instance.generate_daisy()[0]))  #                       
-        _pred = loaded_model.predict(features)
+        _pred_country = loaded_country_model.predict(features)
+        _pred_year = loaded_year_model.predict(features)
         country_code = {0: 'China', 1:'Japan', 2:'Malaysia', 3:'Singapore', 4:'South_Korea'}
-        self.result['text'] = country_code[int(_pred)]
+        year_code = {0: '2010', 1:'2011', 2:'2012', 3:'2013', 4:'2014', 5:'2015'}
+        self.result['text'] = 'Country:' + country_code[int(_pred_country)] + ' Year:' + year_code[int(_pred_year)]
 
 
 class TrainDialog:
@@ -124,10 +130,13 @@ class TrainDialog:
         
         self.e = Entry(top)
         self.e.pack(padx=5)
-    
+        Label(top, text="-----------------------------------------------------").pack()
+        Label(top, text="Character").pack()
+        ##############################################################################
+        #### Country or Year?
         MODES = [
-        	("Logistic Regression", "0"),
-        	("SVM", "1")
+            ("Country", "0"),
+            ("Year", "1")
             ]
     
         v = StringVar()
@@ -136,15 +145,41 @@ class TrainDialog:
         for text, mode in MODES:    
             if i == 0:
                 b = Radiobutton(top, text=text,
-            			variable=v, value=mode, command=self.set_lr)
+                        variable=v, value=mode, command=self.set_country)
             else:
                 b = Radiobutton(top, text=text,
-            			variable=v, value=mode, command=self.set_svm)
+                        variable=v, value=mode, command=self.set_year)
     
             b.pack(anchor=W)
             i += 1
+
+        Label(top, text="-----------------------------------------------------").pack()
+        Label(top, text="Algorithm").pack()
+        ##############################################################################
+        #### Algorithm?
+    
+        MODES = [
+            ("Logistic Regression", "0"),
+            ("SVM", "1")
+            ]
+    
+        v = StringVar()
+        v.set("0")  # initialize
+        i = 0
+        for text, mode in MODES:    
+            if i == 0:
+                b = Radiobutton(top, text=text,
+                        variable=v, value=mode, command=self.set_lr)
+            else:
+                b = Radiobutton(top, text=text,
+                        variable=v, value=mode, command=self.set_svm)
+    
+            b.pack(anchor=W)
+            i += 1
+
         b = Button(top, text="Start", command=self.train_model)
         b.pack(pady=5)
+
     
     def set_lr(self):
         global algorithm
@@ -152,47 +187,87 @@ class TrainDialog:
     def set_svm(self):
         global algorithm
         algorithm = 1
+        
+    def set_country(self):
+        global character
+        character = 0
+    def set_year(self):
+        global character
+        character = 1
+        
+        
     def train_model(self):
         global algorithm
+        global character
         if self.e.get().strip() == '':
             return 
         new_model_name = self.e.get()
         print "mode name is", self.e.get()
         print "algorithm name is", algorithm
         #     train samples
-        X_train , y_train = dataset.get_training_data_country()
         s = None
-        if algorithm == 0:
-            s = train_logistic_regression(X_train , y_train)
+        if character == 0:            
+            X_train , y_train = dataset.get_training_data_country()
+            if algorithm == 0:
+                s = train_logistic_regression_country(X_train , y_train)
+            else:
+                s = train_SVM_country(X_train , y_train)
         else:
-            s = train_SVM(X_train , y_train)
-    
+            print dataset
+            X_train , y_train = dataset.get_training_data_year()             
+            if algorithm == 0:
+                s = train_logistic_regression_year(X_train , y_train)
+            else:
+                s = train_SVM_year(X_train , y_train)
+            
         joblib.dump(s, new_model_name + '.pkl') 
         self.top.destroy()
 
 
-def train_logistic_regression(X_train, y_train):    
+def train_logistic_regression_country(X_train, y_train):    
     print('Training Logistic Regression Classifier')
     logistic_regression = LogisticRegression()
     logistic_regression.fit(X_train, y_train)
     s = pickle.dumps(logistic_regression)
     return s
-def train_SVM(X_train, y_train): 
+def train_SVM_country(X_train, y_train): 
     print('Training SVM Classifier')   
     svm_classifier = NuSVC()
     svm_classifier.fit(X_train, y_train) 
     s = pickle.dumps(svm_classifier)
     return s
 
-def load_model():
+
+def train_logistic_regression_year(X_train, y_train):    
+    print('Training Logistic Regression Classifier')
+    logistic_regression = LogisticRegression()
+    logistic_regression.fit(X_train, y_train)
+    s = pickle.dumps(logistic_regression)
+    return s
+def train_SVM_year(X_train, y_train): 
+    print('Training SVM Classifier')   
+    svm_classifier = NuSVC()
+    svm_classifier.fit(X_train, y_train) 
+    s = pickle.dumps(svm_classifier)
+    return s
+
+def load_country_model():
     model_file = askopenfilename()
-    global loaded_model_name
-    loaded_model_name = model_file
-    global loaded_model
-    loaded_model = pickle.loads(joblib.load(model_file))
+    global loaded_country_model_name
+    loaded_country_model_name = model_file
+    global loaded_country_model
+    loaded_country_model = pickle.loads(joblib.load(model_file))
+def load_year_model():
+    model_file = askopenfilename()
+    global loaded_year_model_name
+    loaded_year_model_name = model_file
+    global loaded_year_model
+    loaded_year_model = pickle.loads(joblib.load(model_file))
+
 def open_file():
-    global loaded_model
-    if loaded_model == None:
+    global loaded_country_model
+    global loaded_year_model
+    if loaded_year_model == None or loaded_country_model == None:
         tkMessageBox.showwarning(
             "Open file",
             "Model file is not selected"
@@ -238,11 +313,24 @@ def train():
     d = TrainDialog(app.frame)
     app.frame.wait_window(d.top)
 
-def evaluate():
+def evaluate_country():
     model_file = askopenfilename()
     print model_file
     model = pickle.loads(joblib.load(model_file))
     X_test , y_test = dataset.get_testing_data_country()
+    y_pred = model.predict(X_test)
+    cm = confusion_matrix(y_test, y_pred)
+    print(cm)
+    d = ResultDialog(app.frame, cm)
+    
+    app.frame.wait_window(d.top)
+
+
+def evaluate_year():
+    model_file = askopenfilename()
+    print model_file
+    model = pickle.loads(joblib.load(model_file))
+    X_test , y_test = dataset.get_testing_data_year()
     y_pred = model.predict(X_test)
     cm = confusion_matrix(y_test, y_pred)
     print(cm)
@@ -313,9 +401,13 @@ class StampApp(Tk):
 # global variables
 index = 0
 stamp_labels = []
-loaded_model = None
-loaded_model_name = ''
+loaded_country_model = None
+loaded_country_model_name = ''
+loaded_year_model = None
+loaded_year_model_name = ''
+
 algorithm = 0  # 0)logisitic regression 1) SVM
+character = 0
 #
 
 
@@ -333,7 +425,8 @@ app.config(menu=menu)
 ###########################################
 filemenu = Menu(menu)
 menu.add_cascade(label="File", menu=filemenu)
-filemenu.add_command(label="Load a Model", command=load_model)
+filemenu.add_command(label="Load Country Model", command=load_country_model)
+filemenu.add_command(label="Load Year Model", command=load_year_model)
 filemenu.add_command(label="Evaluate an Image", command=open_file)
 filemenu.add_separator()
 filemenu.add_command(label="Exit", command=app.quit)
@@ -343,7 +436,8 @@ dataset_menue = Menu(menu)
 menu.add_cascade(label="Dataset", menu=dataset_menue)
 dataset_menue.add_command(label="Show Dataset Images", command=load_dataset)
 dataset_menue.add_command(label="Train", command=train)
-dataset_menue.add_command(label="Evaluate", command=evaluate)
+dataset_menue.add_command(label="Evaluate Country Character", command=evaluate_country)
+dataset_menue.add_command(label="Evaluate Year Character", command=evaluate_year)
 #########################################3#
 helpmenu = Menu(menu)
 menu.add_cascade(label="Help", menu=helpmenu)
