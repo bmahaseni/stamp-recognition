@@ -112,7 +112,7 @@ class ImageDialog:
         # features = np.concatenate((features, instance.generate_daisy()[0]))  #                       
         _pred_country = loaded_country_model.predict(features)
         _pred_year = loaded_year_model.predict(features)
-        country_code = {0: 'China', 1:'Japan', 2:'Malaysia', 3:'Singapore', 4:'South_Korea', 5: 'Not_Stamp'}
+        country_code = {0: 'China', 1:'Japan', 2:'Malaysia', 3:'Singapore', 4:'South_Korea', 5: 'Unkown'}
         year_code = {0: '2010', 1:'2011', 2:'2012', 3:'2013', 4:'2014', 5:'2015', 6: '-1000'}
         if country_code == 5:
             self.result['text'] = 'Country:' + country_code[int(_pred_country)]
