@@ -49,7 +49,7 @@ from sklearn.externals import joblib
 from tornado.gen import Task
 
 
-country_map = {'China':0, 'Japan':1, 'Malaysia':2, 'Singapore':3, 'South_Korea':4}
+country_map = {'China':0, 'Japan':1, 'Malaysia':2, 'Singapore':3, 'South_Korea':4, 'Not_Stamp': 5}
 
 from instance import Instance
 from dataset import Dataset
@@ -57,7 +57,7 @@ import pickle
 
 
 
-dataset = Dataset('./dataset', ['China', 'Japan', 'Malaysia', 'Singapore', 'South_Korea'], ['2010', '2011', '2012', '2013', '2014', '2015' ])
+dataset = Dataset('./dataset', ['China', 'Japan', 'Malaysia', 'Singapore', 'South_Korea', 'Not_Stamp'], ['2010', '2011', '2012', '2013', '2014', '2015'])
 
 dataset.generate_date()
 
@@ -112,9 +112,12 @@ class ImageDialog:
         # features = np.concatenate((features, instance.generate_daisy()[0]))  #                       
         _pred_country = loaded_country_model.predict(features)
         _pred_year = loaded_year_model.predict(features)
-        country_code = {0: 'China', 1:'Japan', 2:'Malaysia', 3:'Singapore', 4:'South_Korea'}
-        year_code = {0: '2010', 1:'2011', 2:'2012', 3:'2013', 4:'2014', 5:'2015'}
-        self.result['text'] = 'Country:' + country_code[int(_pred_country)] + ' Year:' + year_code[int(_pred_year)]
+        country_code = {0: 'China', 1:'Japan', 2:'Malaysia', 3:'Singapore', 4:'South_Korea', 5: 'Not_Stamp'}
+        year_code = {0: '2010', 1:'2011', 2:'2012', 3:'2013', 4:'2014', 5:'2015', 6: '-1000'}
+        if country_code == 5:
+            self.result['text'] = 'Country:' + country_code[int(_pred_country)]
+        else:
+            self.result['text'] = 'Country:' + country_code[int(_pred_country)] + ' Year:' + year_code[int(_pred_year)]
 
 
 class TrainDialog:

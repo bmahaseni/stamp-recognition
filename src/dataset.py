@@ -23,8 +23,8 @@ from sklearn.svm import NuSVC
 
 from instance import Instance
 
-country_map = {'China':0, 'Japan':1, 'Malaysia':2, 'Singapore':3, 'South_Korea':4}
-year_map = {'2010': 0, '2011': 1, '2012': 2, '2013': 3, '2014':4, '2015':5}
+country_map = {'China':0, 'Japan':1, 'Malaysia':2, 'Singapore':3, 'South_Korea':4, 'Not_Stamp': 5}
+year_map = {'2010': 0, '2011': 1, '2012': 2, '2013': 3, '2014':4, '2015':5, '-1000':6}
 class Dataset:
     
  
@@ -39,10 +39,15 @@ class Dataset:
     def generate_date(self):
         self.instances = []
         for country in self.countries:
-            for year in self.years:
-                files = glob.glob(self.dataset_folder + os.path.sep + country + os.path.sep + year + os.path.sep + "*.*")
-                for file in files:
-                    self.instances.append(Instance(file, country.ljust(15), year))
+            if country == 'Not_Stamp':
+                    files = glob.glob(self.dataset_folder + os.path.sep + country + os.path.sep + "*.*")
+                    for file in files:
+                        self.instances.append(Instance(file, country.ljust(15), '-1000'))
+            else:
+                for year in self.years:
+                    files = glob.glob(self.dataset_folder + os.path.sep + country + os.path.sep + year + os.path.sep + "*.*")
+                    for file in files:
+                        self.instances.append(Instance(file, country.ljust(15), year))
         
         print('Total # of instances:' + str(len(self.instances)))
         
