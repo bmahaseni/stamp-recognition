@@ -328,14 +328,33 @@ def load_dataset():
         stamp_labels.append(label)
 
 def train():
-    d = TrainDialog(app.frame)
-    app.frame.wait_window(d.top)
-
-def evaluate_country():
     global stamp_labels
     for stamp_label in stamp_labels:
         stamp_label.config(text='', image='')
     stamp_labels = []
+
+    app.message_label.pack()
+    app.console_message.pack()
+    app.update_idletasks()
+
+
+    start_time = time.time()
+    d = TrainDialog(app.frame)
+    app.frame.wait_window(d.top)
+    end_time = time.time()
+    prediction_time = end_time - start_time
+    app.message_label.config(text='Message')
+    app.console_message.config(text='Processing time:' + str(prediction_time))
+    app.update_idletasks()
+
+def evaluate_country():
+    global stamp_labels
+    print len(stamp_labels)
+    for stamp_label in stamp_labels:
+        stamp_label.config(text='', image='')
+    stamp_labels = []
+    app.message_label.config(text='')
+    app.console_message.config(text='')
 
     app.message_label.pack()
     app.console_message.pack()
@@ -373,7 +392,7 @@ def evaluate_country():
     s += '-----------------\n'
     app.progress.config(text='')
     # d = ResultDialog(app.frame, cm)
-    app.message_label.config(text='Message')
+    app.message_label.config(text='Result')
     s += 'Data loading time : ' + str(data_load_time) + '\n'
     s += 'Prediction time : ' + str(prediction_time) + '\n'
     s += 'Total Processing time : ' + str(prediction_time + data_load_time) + '\n'
@@ -388,6 +407,8 @@ def evaluate_year():
     for stamp_label in stamp_labels:
         stamp_label.config(text='', image='')
     stamp_labels = []
+    app.message_label.config(text='')
+    app.console_message.config(text='')
 
     app.message_label.pack()
     app.console_message.pack()
@@ -445,14 +466,16 @@ def About():
 
 
 def next_page():
-    app.message_label.config(text='')
-    app.console_message.config(text='')
+    if len(app.message_label['text'].strip()) != 0:
+        app.message_label.config(text='')
+        app.console_message.config(text='')
     global index
     if index * 15 < len(dataset.instances):	
         index += 1
         global stamp_labels
         for stamp_label in stamp_labels:
             stamp_label.destroy()
+        stamp_labels=[]
         for i in xrange(15):
             image = Image.open(dataset.instances[index * 15 + i].file_path)
             image = pad_image(image)
@@ -464,14 +487,16 @@ def next_page():
             label.grid(row=15 + i / 3, column=i % 3)
             stamp_labels.append(label)
 def previous_page():
-    app.message_label.config(text='')
-    app.console_message.config(text='')
+    if len(app.message_label['text'].strip()) != 0:
+        app.message_label.config(text='')
+        app.console_message.config(text='')
     global index
     if index != 0:
         index -= 1
         global stamp_labels
         for stamp_label in stamp_labels:
             stamp_label.destroy()
+        stamp_labels=[]
         for i in xrange(15):
             image = Image.open(dataset.instances[index * 15 + i].file_path)
             image = pad_image(image)
