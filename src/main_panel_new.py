@@ -1,11 +1,14 @@
 from Tkinter import *
 from PIL import Image, ImageTk
 from dataset import Dataset
+import ttk
+import time
 
 from tkFileDialog   import askopenfilename      
 import tkMessageBox
 import matplotlib
 # matplotlib.use("Qt4Agg")
+from shutil import copyfile
 
 import skimage.io as io
 import glob
@@ -81,6 +84,7 @@ class ImageDialog:
         global loaded_model_name
         top = self.top = Toplevel(parent)
         top.geometry("%dx%d%+d%+d" % (500, 400, 250, 125))
+        self.top = top
         image = Image.open(image_name)
         image.thumbnail((200, 200))
         photo = ImageTk.PhotoImage(image)
@@ -119,6 +123,13 @@ class ImageDialog:
         else:
             self.result['text'] = 'Country:' + country_code[int(_pred_country)] + ' Year:' + year_code[int(_pred_year)]
 
+        b = Button(self.top, text="Add", command=self.add_image_dataset)
+        b.pack(pady=5)
+        self.country = country_code[int(_pred_country)]
+        self.year = year_code[int(_pred_year)]
+    def add_image_dataset(self):
+        copyfile(self.image_instance.file_path, dataset.dataset_folder + '/' + self.country + '/' + self.year + '/' + self.image_instance.file_path.split('/')[-1].strip())
+        self.top.destroy()
 
 class TrainDialog:
 
@@ -296,6 +307,10 @@ def pad_image(image):
     	              (new_size[1] - old_size[1]) / 2))
     return new_im
 def load_dataset():
+    app.frame.pack()
+    app.message_label.config(text='')
+    app.console_message.config(text='')
+
     global index
     global stamp_labels
     for stamp_label in stamp_labels:
@@ -317,29 +332,112 @@ def train():
     app.frame.wait_window(d.top)
 
 def evaluate_country():
+    global stamp_labels
+    for stamp_label in stamp_labels:
+        stamp_label.config(text='', image='')
+    stamp_labels = []
+
+    app.message_label.pack()
+    app.console_message.pack()
+    app.update_idletasks()
+
     model_file = askopenfilename()
     print model_file
+    start_time = time.time()
+
     model = pickle.loads(joblib.load(model_file))
+    app.progress.config(text='Please Wait ...')
+    app.update_idletasks()
     X_test , y_test = dataset.get_testing_data_country()
+    end_time = time.time()
+    data_load_time = end_time - start_time
+    start_time = end_time
     y_pred = model.predict(X_test)
+    end_time = time.time()
+    prediction_time = end_time - start_time
+
     cm = confusion_matrix(y_test, y_pred)
-    print(cm)
-    d = ResultDialog(app.frame, cm)
     
-    app.frame.wait_window(d.top)
+    
+    country_code = {0: 'China', 1:'Japan', 2:'Malaysia', 3:'Singapore', 4:'South_Korea', 5: 'Unkown'}
+    year_code = {0: '2010', 1:'2011', 2:'2012', 3:'2013', 4:'2014', 5:'2015', 6: '-1000'}
+    s = 'China'.ljust(15) + '\t' + 'Japan'.ljust(15) + '\t' + 'Malaysia'.ljust(15) + '\t' + 'Singapore'.ljust(15) + '\t' + 'South_Korea'.ljust(15) + '\n'
+    for i in xrange(len(country_code) - 1):
+        s += country_code[i].ljust(15) + '\t'
+        for j in xrange(len(country_code) - 1):
+            s += str(cm[i][j]).ljust(15) + '\t'
+        s += '\n'
+    
+
+    s += '\n\n'
+    s += '-----------------\n'
+    app.progress.config(text='')
+    # d = ResultDialog(app.frame, cm)
+    app.message_label.config(text='Message')
+    s += 'Data loading time : ' + str(data_load_time) + '\n'
+    s += 'Prediction time : ' + str(prediction_time) + '\n'
+    s += 'Total Processing time : ' + str(prediction_time + data_load_time) + '\n'
+    app.console_message.config(text=s)
+    app.update_idletasks()
+    print s
+#     app.frame.wait_window(d.top)
 
 
 def evaluate_year():
+    global stamp_labels
+    for stamp_label in stamp_labels:
+        stamp_label.config(text='', image='')
+    stamp_labels = []
+
+    app.message_label.pack()
+    app.console_message.pack()
+    app.update_idletasks()
+
     model_file = askopenfilename()
     print model_file
     model = pickle.loads(joblib.load(model_file))
+    app.progress.config(text='Please Wait ...')
+    app.update_idletasks()
+
+    start_time = time.time()
     X_test , y_test = dataset.get_testing_data_year()
+    end_time = time.time()
+    data_load_time = end_time - start_time
+    start_time = end_time
+
     y_pred = model.predict(X_test)
+    end_time = time.time()
+    prediction_time = end_time - start_time
+
     cm = confusion_matrix(y_test, y_pred)
-    print(cm)
-    d = ResultDialog(app.frame, cm)
+
+    country_code = {0: 'China', 1:'Japan', 2:'Malaysia', 3:'Singapore', 4:'South_Korea', 5: 'Unkown'}
+    year_code = {0: '2010', 1:'2011', 2:'2012', 3:'2013', 4:'2014', 5:'2015', 6: '-1000'}
+    s = '2010'.ljust(8) + '\t' + '2011'.ljust(8) + '\t' + '2012'.ljust(8) + '\t' + '2013'.ljust(8) + '\t' + '2014'.ljust(8) + '\t' + '2015'.ljust(8) + '\n'
+    for i in xrange(len(country_code) - 1):
+        s += year_code[i].ljust(8) + '\t'
+        for j in xrange(len(country_code) - 1):
+            s += str(cm[i][j]).ljust(8) + '\t'
+        s += '\n'
     
-    app.frame.wait_window(d.top)
+
+    s += '\n\n'
+    s += '-----------------\n'
+
+    
+#     d = ResultDialog(app.frame, cm)
+    
+#     app.frame.wait_window(d.top)
+    app.progress.config(text='')
+    # d = ResultDialog(app.frame, cm)
+    app.message_label.config(text='Message')
+    s += 'Data loading time : ' + str(data_load_time) + '\n'
+    s += 'Prediction time : ' + str(prediction_time) + '\n'
+    s += 'Total Processing time : ' + str(prediction_time + data_load_time) + '\n'
+    print s
+    app.console_message.config(text=s)
+    app.update_idletasks()
+
 
     
 def About():
@@ -347,6 +445,8 @@ def About():
 
 
 def next_page():
+    app.message_label.config(text='')
+    app.console_message.config(text='')
     global index
     if index * 15 < len(dataset.instances):	
         index += 1
@@ -364,6 +464,8 @@ def next_page():
             label.grid(row=15 + i / 3, column=i % 3)
             stamp_labels.append(label)
 def previous_page():
+    app.message_label.config(text='')
+    app.console_message.config(text='')
     global index
     if index != 0:
         index -= 1
@@ -400,6 +502,21 @@ class StampApp(Tk):
         self.label.pack()
         b = Button(text="next", command=next_page)
         b.pack()
+
+        self.label = Label(text="------------------------")
+        self.label.pack()
+
+        self.progress = Label(text='')
+        self.progress.pack()
+        
+        
+        # self.progress.pack_forget()
+        self.message_label = Label(text="")
+        self.message_label.pack()
+
+        self.console_message = Label(text="")
+        self.console_message.pack()
+
 
 # global variables
 index = 0
