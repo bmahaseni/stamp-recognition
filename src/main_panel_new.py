@@ -219,9 +219,11 @@ class TrainDialog:
         print "mode name is", self.e.get()
         print "algorithm name is", algorithm
         #     train samples
+        global number_training_samples
         s = None
         if character == 0:            
             X_train , y_train = dataset.get_training_data_country()
+            number_training_samples = len(y_train)
             if algorithm == 0:
                 s = train_logistic_regression_country(X_train , y_train)
             else:
@@ -229,6 +231,7 @@ class TrainDialog:
         else:
             print dataset
             X_train , y_train = dataset.get_training_data_year()             
+            number_training_samples = len(y_train)
             if algorithm == 0:
                 s = train_logistic_regression_year(X_train , y_train)
             else:
@@ -337,6 +340,7 @@ def train():
     app.console_message.pack()
     app.update_idletasks()
 
+    global number_training_samples
 
     start_time = time.time()
     d = TrainDialog(app.frame)
@@ -344,7 +348,7 @@ def train():
     end_time = time.time()
     prediction_time = end_time - start_time
     app.message_label.config(text='Message')
-    app.console_message.config(text='Processing time:' + str(prediction_time))
+    app.console_message.config(text='Total #examples:' + str(number_training_samples) + '\n' + 'Processing time:' + str(prediction_time))
     app.update_idletasks()
 
 def evaluate_country():
@@ -381,13 +385,18 @@ def evaluate_country():
     country_code = {0: 'China', 1:'Japan', 2:'Malaysia', 3:'Singapore', 4:'South_Korea', 5: 'Unkown'}
     year_code = {0: '2010', 1:'2011', 2:'2012', 3:'2013', 4:'2014', 5:'2015', 6: '-1000'}
     s = 'China'.ljust(15) + '\t' + 'Japan'.ljust(15) + '\t' + 'Malaysia'.ljust(15) + '\t' + 'Singapore'.ljust(15) + '\t' + 'South_Korea'.ljust(15) + '\n'
+    correct = 0.0
+    total = 0.0
     for i in xrange(len(country_code) - 1):
         s += country_code[i].ljust(15) + '\t'
         for j in xrange(len(country_code) - 1):
             s += str(cm[i][j]).ljust(15) + '\t'
+            if i == j:
+                correct += cm[i][j]
+            total += cm[i][j]
         s += '\n'
     
-
+    s += 'Accuracy: ' + str(correct / total) 
     s += '\n\n'
     s += '-----------------\n'
     app.progress.config(text='')
@@ -435,13 +444,20 @@ def evaluate_year():
     country_code = {0: 'China', 1:'Japan', 2:'Malaysia', 3:'Singapore', 4:'South_Korea', 5: 'Unkown'}
     year_code = {0: '2010', 1:'2011', 2:'2012', 3:'2013', 4:'2014', 5:'2015', 6: '-1000'}
     s = '2010'.ljust(8) + '\t' + '2011'.ljust(8) + '\t' + '2012'.ljust(8) + '\t' + '2013'.ljust(8) + '\t' + '2014'.ljust(8) + '\t' + '2015'.ljust(8) + '\n'
+    correct = 0.0
+    total = 0.0
+
     for i in xrange(len(country_code) - 1):
         s += year_code[i].ljust(8) + '\t'
         for j in xrange(len(country_code) - 1):
             s += str(cm[i][j]).ljust(8) + '\t'
+            if i == j:
+                correct += cm[i][j]
+            total += cm[i][j]
+
         s += '\n'
     
-
+    s += 'Accuracy: ' + str(correct / total)
     s += '\n\n'
     s += '-----------------\n'
 
@@ -475,7 +491,7 @@ def next_page():
         global stamp_labels
         for stamp_label in stamp_labels:
             stamp_label.destroy()
-        stamp_labels=[]
+        stamp_labels = []
         for i in xrange(15):
             image = Image.open(dataset.instances[index * 15 + i].file_path)
             image = pad_image(image)
@@ -496,7 +512,7 @@ def previous_page():
         global stamp_labels
         for stamp_label in stamp_labels:
             stamp_label.destroy()
-        stamp_labels=[]
+        stamp_labels = []
         for i in xrange(15):
             image = Image.open(dataset.instances[index * 15 + i].file_path)
             image = pad_image(image)
@@ -562,7 +578,7 @@ character = 0
 app = StampApp()
 
 
-
+number_training_samples = 0
 
 menu = Menu(app.frame)
 app.config(menu=menu)
