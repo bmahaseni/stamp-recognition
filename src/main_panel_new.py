@@ -79,19 +79,24 @@ class ResultDialog:
 
 class ImageDialog:
     def __init__(self, parent, image_name):
-        
+        self.rotate = 0
+        self.add = False
         global loaded_model
         global loaded_model_name
+        self.image_name = image_name
         top = self.top = Toplevel(parent)
         top.geometry("%dx%d%+d%+d" % (500, 400, 250, 125))
         self.top = top
         image = Image.open(image_name)
         image.thumbnail((200, 200))
         photo = ImageTk.PhotoImage(image)
-        label = Label(top, image=photo, text='', compound=LEFT)
-        label.image = photo  # keep a reference!
-        label.pack()
+        self.label = Label(top, image=photo, text='', compound=LEFT)
+        self.label.image = photo  # keep a reference!
+        self.label.pack()
+        
         b = Button(top, text="Test", command=self.test_image)
+        b.pack(pady=5)
+        b = Button(top, text="Rotate", command=self.rotate_image)
         b.pack(pady=5)
         label = Label(top, text='Loaded Country Model Name: ' + loaded_country_model_name.split('/')[-1], compound=LEFT)
         label.pack()
@@ -122,11 +127,29 @@ class ImageDialog:
             self.result['text'] = 'Country:' + country_code[int(_pred_country)]
         else:
             self.result['text'] = 'Country:' + country_code[int(_pred_country)] + ' Year:' + year_code[int(_pred_year)]
-
-        b = Button(self.top, text="Add", command=self.add_image_dataset)
-        b.pack(pady=5)
+        if self.add == False:
+            b = Button(self.top, text="Add", command=self.add_image_dataset)
+            b.pack(pady=5)
+            self.add = True
         self.country = country_code[int(_pred_country)]
         self.year = year_code[int(_pred_year)]
+
+    def rotate_image(self):
+
+        print 'rotate'
+        self.rotate = (self.rotate + 1) % 4
+        print self.image_name
+        image = Image.open(self.image_name)
+        image.thumbnail((200, 200))
+        for i in xrange(self.rotate):
+            image = image.rotate(90)
+        print self.rotate
+        photo = ImageTk.PhotoImage(image)
+        self.label.configure(image = photo)
+        self.label.image = photo
+        app.update_idletasks()
+
+
     def add_image_dataset(self):
         copyfile(self.image_instance.file_path, dataset.dataset_folder + '/' + self.country + '/' + self.year + '/' + self.image_instance.file_path.split('/')[-1].strip())
         self.top.destroy()
@@ -447,9 +470,9 @@ def evaluate_year():
     correct = 0.0
     total = 0.0
 
-    for i in xrange(len(country_code) - 1):
+    for i in xrange(len(year_code) - 1):
         s += year_code[i].ljust(8) + '\t'
-        for j in xrange(len(country_code) - 1):
+        for j in xrange(len(year_code) - 1):
             s += str(cm[i][j]).ljust(8) + '\t'
             if i == j:
                 correct += cm[i][j]
